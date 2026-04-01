@@ -2,11 +2,12 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "master", "CI", "actions"]
+    branches: ["master", "CI", "actions"]
     paths-ignore: ['md-help/**']
   pull_request:
-    branches: [ "master", "CI", "actions"]
+    branches: ["master", "CI", "actions"]
     paths-ignore: ['md-help/**', 'Help-files/**']
+  workflow_dispatch: {}
 
 jobs:
   Linux-Build:
@@ -24,9 +25,9 @@ jobs:
         mv pure-data-* pure-data
 
     - name: Build pd-cyclone
-      run: | 
+      run: |
         make install PDINCLUDEDIR=./pure-data/src PDLIBDIR=./pd-cyclone extension=l_amd64
-        
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -36,47 +37,47 @@ jobs:
   Linux-ARM64-Build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+    - name: Checkout source
+      uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Create Dockerfile
-        run: |
-          cat <<'EOF' > Dockerfile
-          FROM arm64v8/debian:bullseye
-          RUN apt-get update && apt-get install -y \
-              build-essential \
-              puredata \
-              curl \
-              unzip \
-              make
-          WORKDIR /build
-          COPY . .
-          RUN PD_URL=https://github.com/pure-data/pure-data/archive/refs/tags/0.56-1.zip && \
-              curl -L -o pure-data.zip $PD_URL && \
-              unzip pure-data.zip && \
-              rm pure-data.zip && \
-              mv pure-data-* pure-data
-          RUN make install PDINCLUDEDIR=./pure-data/src PDLIBDIR=./pd-cyclone extension=l_arm64
-          EOF
+    - name: Create Dockerfile
+      run: |
+        cat <<'EOF' > Dockerfile
+        FROM arm64v8/debian:bullseye
+        RUN apt-get update && apt-get install -y \
+            build-essential \
+            puredata \
+            curl \
+            unzip \
+            make
+        WORKDIR /build
+        COPY . .
+        RUN PD_URL=https://github.com/pure-data/pure-data/archive/refs/tags/0.56-1.zip && \
+            curl -L -o pure-data.zip $PD_URL && \
+            unzip pure-data.zip && \
+            rm pure-data.zip && \
+            mv pure-data-* pure-data
+        RUN make install PDINCLUDEDIR=./pure-data/src PDLIBDIR=./pd-cyclone extension=l_arm64
+        EOF
 
-      - name: Build Docker image and extract artifacts
-        run: |
-          docker buildx build --platform linux/arm64 -t pd-cyclone-arm64 . --load
-          container_id=$(docker create pd-cyclone-arm64)
-          docker cp "$container_id":/build/pd-cyclone ./pd-cyclone-arm64
-          docker rm "$container_id"
+    - name: Build Docker image and extract artifacts
+      run: |
+        docker buildx build --platform linux/arm64 -t pd-cyclone-arm64 . --load
+        container_id=$(docker create pd-cyclone-arm64)
+        docker cp "$container_id":/build/pd-cyclone ./pd-cyclone-arm64
+        docker rm "$container_id"
 
-      - name: Upload ARM64 Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cyclone-linux-arm64
-          path: ./pd-cyclone-arm64
+    - name: Upload ARM64 Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cyclone-linux-arm64
+        path: ./pd-cyclone-arm64
 
   Windows-Build:
     runs-on: windows-latest
@@ -94,12 +95,13 @@ jobs:
     - name: "Install mingw deps"
       uses: msys2/setup-msys2@v2
       with:
-        install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-ntldd-git mingw-w64-x86_64-fluidsynth mingw64/mingw-w64-x86_64-cmake unzip curl
+        install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-ntldd-git 
+          mingw-w64-x86_64-fluidsynth mingw64/mingw-w64-x86_64-cmake unzip curl
         update: false
 
     - name: Get Pd
       shell: msys2 {0}
-      run: | 
+      run: |
         curl -L -o pure-data.zip http://msp.ucsd.edu/Software/pd-0.56-1.msw.zip
         unzip pure-data.zip
         rm pure-data.zip
@@ -109,7 +111,7 @@ jobs:
       shell: msys2 {0}
       run: |
         make install PDDIR=./pure-data PDLIBDIR=./pd-cyclone extension=m_amd64
-        
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -134,7 +136,7 @@ jobs:
     - name: Build pd-cyclone
       run: |
         make install PDLIBDIR=./pd-cyclone extension=d_amd64 PDINCLUDEDIR=./pure-data/src
-        
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -159,7 +161,7 @@ jobs:
     - name: Build pd-cyclone
       run: |
         make install PDLIBDIR=./pd-cyclone extension=d_amd64 PDINCLUDEDIR=./pure-data/src
-        
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
